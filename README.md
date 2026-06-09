@@ -45,7 +45,7 @@ Automated parking management system with QR code-based entry/exit, real-time slo
    ```
 
 2. **Open your browser**
-   Navigate to: `http://localhost:5000`
+   Navigate to: `http://127.0.0.1:5001/`
 
 ## 📱 Usage
 

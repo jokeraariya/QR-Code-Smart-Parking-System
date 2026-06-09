@@ -1,323 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - QR Parking</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>QR Parking - Admin Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
-            background: #f5f5f5;
-            padding: 2rem 0;
+            background: #eef1f6;
+            padding: 30px;
+            font-family: "Segoe UI", sans-serif;
         }
+
+        h2 {
+            font-weight: 700;
+        }
+
+        /* ================= STATS CARDS ================= */
         .stat-card {
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            padding: 22px;
+            border-radius: 12px;
             color: white;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
         }
-        .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.danger { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
-        .stat-card.info { background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%); }
+
+        .purple {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .green {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .red {
+            background: linear-gradient(135deg, #eb3349, #f45c43);
+        }
+
+        .blue {
+            background: linear-gradient(135deg, #3494E6, #EC6EAD);
+        }
+
+        /* ================= SLOTS ================= */
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
         .slot {
-            display: inline-block;
-            padding: 0.5rem;
-            margin: 0.25rem;
-            border-radius: 5px;
-            font-size: 0.85rem;
+            width: 85px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
             cursor: pointer;
+            transition: .2s;
+            position: relative;
         }
-        .slot.available { background: #28a745; color: white; }
-        .slot.occupied { background: #dc3545; color: white; }
-        .table-container {
-            max-height: 400px;
+
+        .slot:hover {
+            transform: scale(1.05);
+        }
+
+        .available {
+            background: #28a745;
+        }
+
+        .occupied {
+            background: #dc3545;
+        }
+
+        .slot-clear-btn {
+            display: none;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: white;
+            color: #dc3545;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .slot.occupied:hover .slot-clear-btn {
+            display: block;
+        }
+
+        /* ================= TABLE ================= */
+        .table-box {
+            max-height: 380px;
             overflow-y: auto;
         }
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .nav-tabs .nav-link {
+            font-weight: 600;
+        }
+
+        .fee-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
+
+
 <body>
+
     <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h2><i class="bi bi-speedometer2"></i> Admin Dashboard</h2>
-                <a href="/" class="btn btn-secondary">
-                    <i class="bi bi-house"></i> Home
-                </a>
-            </div>
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🚗 QR Parking Admin Dashboard</h2>
+            <a href="/" class="btn btn-secondary">Home</a>
         </div>
 
-        <!-- Statistics -->
+
+        <!-- ================= STATS ================= -->
         <div class="row mb-4">
+
             <div class="col-md-3">
-                <div class="stat-card primary">
-                    <h5>Total Revenue</h5>
-                    <h2>₹<span id="totalRevenue">0</span></h2>
+                <div class="stat-card purple">
+                    Total Revenue
+                    <h3>₹ <span id="totalRevenue">0</span></h3>
                 </div>
             </div>
+
             <div class="col-md-3">
-                <div class="stat-card success">
-                    <h5>Today's Revenue</h5>
-                    <h2>₹<span id="todayRevenue">0</span></h2>
+                <div class="stat-card green">
+                    Today's Revenue
+                    <h3>₹ <span id="todayRevenue">0</span></h3>
                 </div>
             </div>
+
             <div class="col-md-3">
-                <div class="stat-card danger">
-                    <h5>Active Parkings</h5>
-                    <h2><span id="activeParkings">0</span></h2>
+                <div class="stat-card red">
+                    Active Parkings
+                    <h3 id="activeParkings">0</h3>
                 </div>
             </div>
+
             <div class="col-md-3">
-                <div class="stat-card info">
-                    <h5>Available Slots</h5>
-                    <h2><span id="availableSlots">0</span></h2>
+                <div class="stat-card blue">
+                    Available Slots
+                    <h3 id="availableSlots">0</h3>
                 </div>
             </div>
+
         </div>
 
-        <!-- Tabs -->
-        <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+
+        <!-- ================= TABS ================= -->
+        <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#slots">Slots</a>
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#slotsTab">Slots</button>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#users">Users</a>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#usersTab">Users</button>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#logs">Parking Logs</a>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#logsTab">Logs</button>
             </li>
         </ul>
 
+
         <div class="tab-content">
-            <!-- Slots Tab -->
-            <div class="tab-pane fade show active" id="slots">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="bi bi-grid"></i> Parking Slots</h5>
-                        <button class="btn btn-sm btn-primary" onclick="loadSlots()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
+
+            <!-- ================= SLOTS ================= -->
+            <div class="tab-pane fade show active" id="slotsTab">
+
+                <div class="card p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <h5>Parking Slots</h5>
+                        <button class="btn btn-primary btn-sm" onclick="loadSlots()">Refresh</button>
                     </div>
-                    <div class="card-body">
-                        <div id="slotsContainer"></div>
-                        <div class="mt-3">
-                            <strong>Legend:</strong>
-                            <span class="slot available">Available</span>
-                            <span class="slot occupied">Occupied</span>
-                        </div>
+
+                    <!-- Fee Information -->
+                    <div class="fee-info mt-3">
+                        <strong>💰 Fee Structure:</strong><br>
+                        • 0-30 minutes = ₹20<br>
+                        • 31-60 minutes = ₹30<br>
+                        • 61-90 minutes = ₹40<br>
+                        • Each additional 30 min = +₹10<br>
+                        <small class="text-muted">Hover over occupied slots to clear them</small>
                     </div>
+
+                    <div id="grid" class="grid"></div>
+
+                    <div class="mt-3">
+                        <span class="badge bg-success">Available</span>
+                        <span class="badge bg-danger">Occupied</span>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- Users Tab -->
-            <div class="tab-pane fade" id="users">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="bi bi-people"></i> Registered Users</h5>
-                        <button class="btn btn-sm btn-primary" onclick="loadUsers()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
-                    </div>
-                    <div class="card-body table-container">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Vehicle No</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
-                                    <th>Registered</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTable"></tbody>
-                        </table>
-                    </div>
+
+            <!-- ================= USERS ================= -->
+            <div class="tab-pane fade" id="usersTab">
+
+                <div class="card p-3 table-box">
+                    <h5>Registered Users</h5>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Vehicle</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Logs Tab -->
-            <div class="tab-pane fade" id="logs">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="bi bi-list-check"></i> Parking Logs</h5>
-                        <div>
-                            <button class="btn btn-sm btn-success" onclick="exportCSV()">
-                                <i class="bi bi-download"></i> Export CSV
-                            </button>
-                            <button class="btn btn-sm btn-primary" onclick="loadLogs()">
-                                <i class="bi bi-arrow-clockwise"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body table-container">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Vehicle No</th>
-                                    <th>Slot</th>
-                                    <th>Entry Time</th>
-                                    <th>Exit Time</th>
-                                    <th>Duration</th>
-                                    <th>Fee</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logsTable"></tbody>
-                        </table>
-                    </div>
+
+            <!-- ================= LOGS ================= -->
+            <div class="tab-pane fade" id="logsTab">
+
+                <div class="card p-3 table-box">
+                    <h5>Parking Logs</h5>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Vehicle</th>
+                                <th>Slot</th>
+                                <th>Entry</th>
+                                <th>Exit</th>
+                                <th>Duration</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTable"></tbody>
+                    </table>
                 </div>
             </div>
+
         </div>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ================= JS ================= -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Load initial data
+
         loadStats();
         loadSlots();
         loadUsers();
         loadLogs();
 
-        // Auto-refresh every 30 seconds
         setInterval(() => {
             loadStats();
             loadSlots();
-        }, 30000);
+        }, 5000);
 
+
+        /* ================= STATS ================= */
         async function loadStats() {
-            try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-                
-                document.getElementById('totalRevenue').textContent = data.total_revenue.toFixed(2);
-                document.getElementById('todayRevenue').textContent = data.today_revenue.toFixed(2);
-                document.getElementById('activeParkings').textContent = data.active_parkings;
-                document.getElementById('availableSlots').textContent = data.available_slots;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+            const r = await fetch('/api/stats');
+            const d = await r.json();
+
+            totalRevenue.innerText = d.total_revenue;
+            todayRevenue.innerText = d.today_revenue;
+            activeParkings.innerText = d.active_parkings;
+            availableSlots.innerText = d.available_slots;
         }
 
+
+        /* ================= SLOTS ================= */
         async function loadSlots() {
-            try {
-                const response = await fetch('/api/slots');
-                const data = await response.json();
-                
-                const container = document.getElementById('slotsContainer');
-                container.innerHTML = '';
-                
-                data.slots.forEach(slot => {
-                    const slotEl = document.createElement('span');
-                    slotEl.className = `slot ${slot.status}`;
-                    slotEl.textContent = slot.slot_number;
-                    slotEl.title = slot.vehicle_no || 'Available';
-                    container.appendChild(slotEl);
-                });
-            } catch (error) {
-                console.error('Error loading slots:', error);
-            }
+            const r = await fetch('/api/slots');
+            const data = await r.json();
+
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            const slots = data.slots || data;
+
+            slots.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'slot ' + s.status;
+                div.innerHTML = s.slot_number;
+
+                if (s.status === 'occupied') {
+                    div.title = `Vehicle: ${s.vehicle_no}\nClick X to clear`;
+
+                    // Add clear button
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'slot-clear-btn';
+                    clearBtn.innerHTML = '×';
+                    clearBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        clearSlot(s.id, s.slot_number);
+                    };
+                    div.appendChild(clearBtn);
+                }
+
+                grid.appendChild(div);
+            });
         }
 
-        async function loadUsers() {
-            try {
-                const response = await fetch('/api/users');
-                const data = await response.json();
-                
-                const tbody = document.getElementById('usersTable');
-                tbody.innerHTML = '';
-                
-                data.users.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.id = `user-row-${user.id}`;
-                    row.innerHTML = `
-                        <td>${user.id}</td>
-                        <td>${user.name}</td>
-                        <td>${user.vehicle_no}</td>
-                        <td>${user.phone || 'N/A'}</td>
-                        <td>${user.email || 'N/A'}</td>
-                        <td>${new Date(user.created_at).toLocaleString()}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${user.name}', '${user.vehicle_no}')">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        }
 
-        async function deleteUser(userId, userName, vehicleNo) {
-            if (!confirm(`Are you sure you want to delete user "${userName}" (Vehicle: ${vehicleNo})?\n\nNote: User must not have active parking.`)) {
+        /* ================= CLEAR SLOT ================= */
+        async function clearSlot(slotId, slotNumber) {
+            if (!confirm(`Clear ${slotNumber}? This will cancel active parking.`)) {
                 return;
             }
 
-            try {
-                const response = await fetch(`/api/users/${userId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+            const r = await fetch(`/api/clear-slot/${slotId}`, {
+                method: 'POST'
+            });
 
-                const data = await response.json();
+            const d = await r.json();
 
-                if (response.ok) {
-                    alert('User deleted successfully!');
-                    loadUsers(); // Refresh the table
-                    loadStats(); // Update statistics
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to delete user'));
-                }
-            } catch (error) {
-                alert('Network error. Please try again.');
-                console.error('Error deleting user:', error);
+            if (r.ok) {
+                alert(d.message);
+                loadSlots();
+                loadStats();
+                loadLogs();
+            } else {
+                alert('Error: ' + d.error);
             }
         }
 
+
+        /* ================= USERS ================= */
+        async function loadUsers() {
+            const r = await fetch('/api/users');
+            const d = await r.json();
+
+            usersTable.innerHTML = '';
+
+            d.users.forEach(u => {
+                usersTable.innerHTML += `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.name}</td>
+                <td>${u.vehicle_no}</td>
+                <td>${u.phone || '-'}</td>
+                <td>${u.email || '-'}</td>
+                <td>${u.created_at}</td>
+            </tr>
+        `;
+            });
+        }
+
+
+        /* ================= LOGS ================= */
         async function loadLogs() {
-            try {
-                const response = await fetch('/api/logs');
-                const data = await response.json();
-                
-                const tbody = document.getElementById('logsTable');
-                tbody.innerHTML = '';
-                
-                data.logs.forEach(log => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${log.id}</td>
-                        <td>${log.name || 'N/A'}</td>
-                        <td>${log.vehicle_no}</td>
-                        <td>${log.slot_number || 'N/A'}</td>
-                        <td>${new Date(log.entry_time).toLocaleString()}</td>
-                        <td>${log.exit_time ? new Date(log.exit_time).toLocaleString() : 'Active'}</td>
-                        <td>${log.duration_minutes || 'N/A'} min</td>
-                        <td>₹${(log.fee || 0).toFixed(2)}</td>
-                        <td><span class="badge ${log.status === 'active' ? 'bg-success' : 'bg-secondary'}">${log.status}</span></td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error loading logs:', error);
-            }
+            const r = await fetch('/api/logs');
+            const d = await r.json();
+
+            logsTable.innerHTML = '';
+
+            d.logs.forEach(l => {
+                const statusBadge = l.status === 'active' ?
+                    '<span class="badge bg-warning">Active</span>' :
+                    l.status === 'completed' ?
+                        '<span class="badge bg-success">Completed</span>' :
+                        '<span class="badge bg-secondary">Cancelled</span>';
+
+                logsTable.innerHTML += `
+            <tr>
+                <td>${l.id}</td>
+                <td>${l.vehicle_no}</td>
+                <td>${l.slot_number || '-'}</td>
+                <td>${l.entry_time}</td>
+                <td>${l.exit_time || '-'}</td>
+                <td>${l.duration_minutes || '-'} min</td>
+                <td>₹${l.fee || 0}</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+            });
         }
 
-        function exportCSV() {
-            window.location.href = '/api/export';
-        }
     </script>
-</body>
-</html>
 
+</body>
+
+</html>

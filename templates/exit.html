@@ -21,6 +21,7 @@
             width: 100%;
             max-width: 500px;
             border-radius: 10px;
+            border: 3px solid #dc3545;
         }
         .scanner-container {
             text-align: center;
@@ -31,6 +32,22 @@
             padding: 1.5rem;
             border-radius: 10px;
             margin-top: 1rem;
+        }
+        .scanning-indicator{
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: none;
+            margin-top: 10px;
+        }
+        .scanning-indicator.active{
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse{
+            0%, 100%{opacity:1;}
+            50%{opacity:0.5;}
         }
     </style>
 </head>
@@ -45,15 +62,21 @@
                     <div class="card-body">
                         <div class="scanner-container">
                             <div id="scannerArea">
-                                <video id="video" autoplay playsinline></video>
+                                <video id="video" autoplay playsinline muted></video>
                                 <canvas id="canvas" style="display: none;"></canvas>
-                                <p class="mt-3">Position QR code within the camera view</p>
-                                <button class="btn btn-danger" onclick="startScan()">
-                                    <i class="bi bi-camera"></i> Start Camera
-                                </button>
-                                <button class="btn btn-secondary" onclick="stopScan()" style="display: none;" id="stopBtn">
-                                    <i class="bi bi-stop-circle"></i> Stop Camera
-                                </button>
+                                
+                                <div class="mt-3">
+                                    <button class="btn btn-danger" onclick="startScan()" id="startBtn">
+                                        <i class="bi bi-camera"></i> Start Camera
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="stopScan()" style="display: none;" id="stopBtn">
+                                        <i class="bi bi-stop-circle"></i> Stop Camera
+                                    </button>
+                                </div>
+
+                                <div class="scanning-indicator" id="scanIndicator">
+                                    <i class="bi bi-camera-video"></i> Scanning for QR Code...
+                                </div>
                             </div>
                             
                             <div class="mt-4">
@@ -96,33 +119,57 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         let video, canvas, context, scanning = false;
+        let scanAnimationId = null;
 
-        function startScan() {
+        async function startScan() {
             video = document.getElementById('video');
             canvas = document.getElementById('canvas');
             context = canvas.getContext('2d');
 
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(stream => {
-                    video.srcObject = stream;
-                    video.setAttribute('playsinline', true);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
                     video.play();
                     scanning = true;
+
+                    document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-block';
+                    document.getElementById('scanIndicator').classList.add('active');
+
                     scanQR();
-                })
-                .catch(err => {
-                    alert('Camera access denied. Please use manual entry.');
-                    console.error(err);
-                });
+                };
+
+            } catch(err) {
+                console.error('Camera error:', err);
+                showError('Camera access denied. Please allow camera permission or use manual entry.');
+            }
         }
 
         function stopScan() {
+            scanning = false;
+
+            if(scanAnimationId){
+                cancelAnimationFrame(scanAnimationId);
+                scanAnimationId = null;
+            }
+
             if (video && video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
-                scanning = false;
-                document.getElementById('stopBtn').style.display = 'none';
+                video.srcObject = null;
             }
+
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('scanIndicator').classList.remove('active');
         }
 
         function scanQR() {
@@ -131,16 +178,23 @@
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 canvas.height = video.videoHeight;
                 canvas.width = video.videoWidth;
+                
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert"
+                });
 
-                if (code) {
+                if (code && code.data) {
+                    console.log("QR Code detected:", code.data);
+                    stopScan();
                     processQR(code.data);
                     return;
                 }
             }
-            requestAnimationFrame(scanQR);
+            
+            scanAnimationId = requestAnimationFrame(scanQR);
         }
 
         function processManualQR() {
@@ -148,7 +202,7 @@
             if (qrData) {
                 processQR(qrData);
             } else {
-                alert('Please enter QR code data');
+                showError('Please enter QR code data');
             }
         }
 
@@ -169,29 +223,39 @@
                 if (response.ok) {
                     document.getElementById('result').style.display = 'block';
                     document.getElementById('slotNumber').textContent = data.slot_number;
-                    document.getElementById('entryTime').textContent = new Date(data.entry_time).toLocaleString();
-                    document.getElementById('exitTime').textContent = new Date(data.exit_time).toLocaleString();
+                    document.getElementById('entryTime').textContent = data.entry_time;
+                    document.getElementById('exitTime').textContent = data.exit_time;
                     document.getElementById('duration').textContent = data.duration_minutes;
                     document.getElementById('fee').textContent = data.fee.toFixed(2);
                     document.getElementById('errorMsg').style.display = 'none';
                     document.getElementById('manualQR').value = '';
                 } else {
-                    document.getElementById('errorMsg').textContent = data.error || 'Exit failed';
-                    document.getElementById('errorMsg').style.display = 'block';
+                    showError(data.error || 'Exit failed');
                     document.getElementById('result').style.display = 'none';
                 }
             } catch (error) {
-                document.getElementById('errorMsg').textContent = 'Network error. Please try again.';
-                document.getElementById('errorMsg').style.display = 'block';
+                showError('Network error. Please try again.');
+                console.error(error);
             }
+        }
+
+        function showError(msg){
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('errorMsg').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('errorMsg').style.display = 'none';
+            }, 5000);
         }
 
         function resetExit() {
             document.getElementById('result').style.display = 'none';
             document.getElementById('errorMsg').style.display = 'none';
             document.getElementById('manualQR').value = '';
+            stopScan();
         }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', stopScan);
     </script>
 </body>
 </html>
-
